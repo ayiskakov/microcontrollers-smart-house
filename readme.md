@@ -1,8 +1,8 @@
 # Controlling smart home systems through Telegram bot
 
 <p align="center">
-    <img src="/img/p2.jpeg" width="600"/>
-    <img src="/img/sc1.jpeg" width="200"/>
+    <img src="/img/p2.jpeg" width="500"/>
+    <img src="/img/sc1.jpeg" width="300"/>
 </p>
 
 This system allows users to control smart home through telegram bot. Users can open door, turn on/off light, turn on/off secure mode, get temperature data, and receive important notifications (e.g. robbery is happening in the house) anywhere with only telegram application.
