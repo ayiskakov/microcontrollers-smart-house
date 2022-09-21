@@ -1,17 +1,28 @@
 package handler
 
 import (
-	"github.com/gin-gonic/gin"
-	"microcontrollers/pkg/service"
+	"context"
 	"net/http"
+
+	"microcontrollers/internal/entity"
+
+	"github.com/gin-gonic/gin"
 )
 
-type Handler struct {
-	services *service.Service
+type Service interface {
+	GetHome(ctx context.Context, id string) (entity.Home, error)
+	GetHomeTG(ctx context.Context, clientId string) (entity.Home, error)
+	CreateHome(ctx context.Context, id, clientId string) (entity.Home, error)
+	UpdateHome(ctx context.Context, id string, input entity.UpdateHomeInput) (entity.Home, error)
+	UpdateHomeInfo(ctx context.Context, id string, input entity.UpdateHomeCommandInput) (entity.Home, error)
 }
 
-func NewHandler(services *service.Service) *Handler {
-	return &Handler{services: services}
+type Handler struct {
+	service Service
+}
+
+func NewHandler(services Service) *Handler {
+	return &Handler{service: services}
 }
 
 func (h *Handler) InitRoutes() *gin.Engine {

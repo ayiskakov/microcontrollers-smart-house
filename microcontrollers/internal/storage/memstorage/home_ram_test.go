@@ -1,13 +1,16 @@
-package repository
+package memstorage
 
 import (
-	"github.com/stretchr/testify/assert"
-	mc "microcontrollers"
 	"testing"
+
+	"microcontrollers/internal/entity"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestHomeRamRepository_CreateHome(t *testing.T) {
-	r := NewHomeRamRepository()
+	r := NewQueries()
 
 	type args struct {
 		homeId   string
@@ -28,7 +31,7 @@ func TestHomeRamRepository_CreateHome(t *testing.T) {
 				homeId:   "asd",
 				clientId: "0xArt",
 			},
-			want: true,
+			wantErr: false,
 		},
 		{
 			name: "Exist",
@@ -37,7 +40,7 @@ func TestHomeRamRepository_CreateHome(t *testing.T) {
 				homeId:   "asd",
 				clientId: "0xArt",
 			},
-			want: false,
+			wantErr: true,
 		},
 	}
 
@@ -45,17 +48,22 @@ func TestHomeRamRepository_CreateHome(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.mock()
 
-			got := r.CreateHome(tt.input.homeId, tt.input.clientId)
-			assert.Equal(t, tt.want, got)
+			_, err := r.CreateHome(tt.input.homeId, tt.input.clientId)
+
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
 		})
 	}
 }
 
 func TestHomeRamRepository_GetHome(t *testing.T) {
-	r := NewHomeRamRepository()
+	r := NewQueries()
 
 	type output struct {
-		h *mc.Home
+		h *entity.Home
 		b bool
 	}
 
@@ -72,7 +80,7 @@ func TestHomeRamRepository_GetHome(t *testing.T) {
 				r.CreateHome("newHome", "0xArt")
 			},
 			input: "newHome",
-			want:  output{h: &mc.Home{ID: "newHome", ClientId: "0xArt"}, b: true},
+			want:  output{h: &entity.Home{ID: "newHome", ClientId: "0xArt"}, b: true},
 		},
 		{
 			name: "Exist",
@@ -80,7 +88,7 @@ func TestHomeRamRepository_GetHome(t *testing.T) {
 				r.CreateHome("newHome", "0xArt")
 			},
 			input: "asd",
-			want:  output{h: &mc.Home{}, b: false},
+			want:  output{h: &entity.Home{}, b: false},
 		},
 	}
 
@@ -99,11 +107,11 @@ func TestHomeRamRepository_GetHome(t *testing.T) {
 }
 
 func TestHomeRamRepository_UpdateHome(t *testing.T) {
-	r := NewHomeRamRepository()
+	r := NewQueries()
 
 	type args struct {
 		id string
-		in mc.UpdateHomeInput
+		in entity.UpdateHomeInput
 	}
 
 	tests := []struct {
@@ -120,7 +128,7 @@ func TestHomeRamRepository_UpdateHome(t *testing.T) {
 			},
 			input: args{
 				id: "newHome",
-				in: mc.UpdateHomeInput{
+				in: entity.UpdateHomeInput{
 					Temperature: stringPointer("35.5"),
 					IsRobbery:   boolPointer(true),
 				},
@@ -134,7 +142,7 @@ func TestHomeRamRepository_UpdateHome(t *testing.T) {
 			},
 			input: args{
 				id: "newHome",
-				in: mc.UpdateHomeInput{
+				in: entity.UpdateHomeInput{
 					Temperature: stringPointer("39.5"),
 				},
 			},
@@ -147,7 +155,7 @@ func TestHomeRamRepository_UpdateHome(t *testing.T) {
 			},
 			input: args{
 				id: "newHome",
-				in: mc.UpdateHomeInput{},
+				in: entity.UpdateHomeInput{},
 			},
 			want: true,
 		},
@@ -157,19 +165,20 @@ func TestHomeRamRepository_UpdateHome(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.mock()
 
-			ok := r.UpdateHome(tt.input.id, tt.input.in)
-			assert.Equal(t, ok, tt.want)
+			_, err := r.UpdateHome(tt.input.id, tt.input.in)
+			require.NoError(t, err)
+			//assert.Equal(t, ok, tt.want)
 		})
 	}
 }
 
 func TestHomeRamRepository_UpdateHomeSecurity(t *testing.T) {
-	r := NewHomeRamRepository()
+	r := NewQueries()
 
 	type args struct {
 		id     string
 		homeId string
-		in     mc.UpdateHomeCommandInput
+		in     entity.UpdateHomeCommandInput
 	}
 
 	type output struct {
@@ -191,7 +200,7 @@ func TestHomeRamRepository_UpdateHomeSecurity(t *testing.T) {
 			},
 			input: args{
 				id: "0xArt",
-				in: mc.UpdateHomeCommandInput{
+				in: entity.UpdateHomeCommandInput{
 					SecureMode:  boolPointer(true),
 					NewClientId: stringPointer("0xMe"),
 				},
@@ -210,7 +219,7 @@ func TestHomeRamRepository_UpdateHomeSecurity(t *testing.T) {
 			},
 			input: args{
 				id: "0xArt",
-				in: mc.UpdateHomeCommandInput{
+				in: entity.UpdateHomeCommandInput{
 					SecureMode: boolPointer(false),
 				},
 				homeId: "new",
@@ -227,12 +236,12 @@ func TestHomeRamRepository_UpdateHomeSecurity(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.mock()
 
-			ok := r.UpdateHomeInfo(tt.input.id, tt.input.in)
-			assert.Equal(t, ok, tt.want.res)
-			h, _ := r.GetHome(tt.input.homeId)
+			home, err := r.UpdateHomeInfo(tt.input.id, tt.input.in)
 
-			assert.Equal(t, h.SecureMode, tt.want.sm)
-			assert.Equal(t, h.ClientId, tt.want.cid)
+			require.NoError(t, err)
+
+			assert.Equal(t, home.SecureMode, tt.want.sm)
+			assert.Equal(t, home.ClientId, tt.want.cid)
 		})
 	}
 }

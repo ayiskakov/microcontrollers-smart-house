@@ -2,15 +2,17 @@ package main
 
 import (
 	"context"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
-	mc "microcontrollers"
-	"microcontrollers/pkg/handler"
-	"microcontrollers/pkg/repository"
-	"microcontrollers/pkg/service"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"microcontrollers/internal/handler"
+	"microcontrollers/internal/server"
+	"microcontrollers/internal/service"
+	"microcontrollers/internal/storage/memstorage"
+
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 func main() {
@@ -20,13 +22,13 @@ func main() {
 		logrus.Fatalf("error initializing configs: %s", err.Error())
 	}
 
-	repos := repository.NewRepository()
-	services := service.NewService(repos)
-	handlers := handler.NewHandler(services)
+	storage := memstorage.NewStorage()
+	svc := service.NewService(storage)
+	hnd := handler.NewHandler(svc)
 
-	srv := new(mc.Server)
+	srv := new(server.Server)
 	go func() {
-		if err := srv.Run(viper.GetString("port"), handlers.InitRoutes()); err != nil {
+		if err := srv.Run(viper.GetString("port"), hnd.InitRoutes()); err != nil {
 			logrus.Fatalf("error occured while running http server: %s", err.Error())
 		}
 	}()

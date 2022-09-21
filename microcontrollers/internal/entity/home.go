@@ -1,4 +1,4 @@
-package microcontrollers
+package entity
 
 import "errors"
 
